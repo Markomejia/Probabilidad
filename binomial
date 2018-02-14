@@ -1,0 +1,74 @@
+#binomial
+#densidad
+#dbinom(x,size = ,prob = )
+#probabilidad acumulada [P=k]
+#pbinom(q,size = ,prob = lower.tail = T, log.p = F)
+#cuantil
+#qbinom(p,size = ,prob = ,lower.tail = T)
+#f.g.v.a.
+#rbinom(n,size = ,prob = )
+
+#ejercicio suponiendo uniforme 1000 número de obs que quiero
+u<-runif(1000)
+#función generadora de v.a.
+x=(u)^(1/3)
+#histograma con acumulada
+hist(x,prob=T)
+#secuencia para observar el crecimiento en linea
+y<-seq(0,1,.01)
+lines(y,3*y^2) #f(x)
+
+#caso de binomial x~Bin(15,0.25) para x=0,1,2,....,15
+polizas<-(0:15)
+n<-15
+#probabilidades
+b<-dbinom(polizas, size = 15, prob = .25)
+b
+#cbind permite agrupar objetos
+informef<-cbind(polizas,b)
+informef
+#graficamos "b" son puntos en type
+plot(polizas,b,type = "b",xlab = "polizas")
+
+#probabilidades P[X<=x] va acumulando los valores
+F<-cumsum(b)
+F
+
+#otra forma para el calculo de probabilidades P[X<=3]
+Fx3 <- pbinom(3,n,prob = .25) #P[X<=x]
+Fx3
+#Acumulada
+Fx<- pbinom(polizas,n,prob = .25)
+Fx
+#polizas con prob acumulada
+info<-cbind(polizas,Fx)
+info
+#prob acumulada contra la de densidad
+plot(polizas,Fx,type = "b")
+points(polizas,b,col="red")
+#media y varianza
+#E[x]=suma(xi*porb(xi))
+media=sum(polizas*b)
+media
+#usando datos de la dbinom
+media2<-n*.25
+media2
+#varianza con parametros
+segundo<-sum((polizas^2)*b)
+var<-segundo-media^2
+var
+#con parametros
+var1<-n*.25*(1-0.25)
+var1
+#otra forma
+var2=sum(((polizas-media)^2)*b)
+var2
+
+#calculo de percentiles
+#por debajo del 30%
+q30<-qbinom(0.3,n,prob = 0.25)
+q30
+percentiles<-seq(0,1,by=0.05)
+lpercent<-qbinom(percentiles,n,prob = .25)
+informe_p<-cbind(percentiles*100,lpercent)
+informe_p
