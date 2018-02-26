@@ -1,0 +1,235 @@
+---
+title: "Pruebas de bondad de ajuste"
+author: "Modelos y Simulación"
+date: "26 de febrero de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Ejemplo 1:
+
+El peso que deben contener ciertas bolsas de detergente es de 750 g, con una tolerancia de ± 5 g. Se desea verificar si es razonable suponer que la distribución del peso es normal. Para ello, se toma una muestra aleatoria de 25 productos, se pesan y se obtienen los datos dados en el vector  Peso:
+
+```{r}
+Peso <- c(750.0, 749.3, 752.5, 748.9, 749.9, 748.6, 750.2, 748.4, 747.8, 749.3, 749.6, 749.0, 747.7, 748.3, 750.5, 750.6, 750.0, 750.4, 752.0, 750.2, 751.4, 750.9, 752.4, 751.7, 750.6)
+```
+
+El primer paso para determinar la distribución de los pesos es realizar un análisis exploratorio de éstos. Dado que la variable de interés es continua se pueden determinar medidas de resumen y realizar gráficos descriptivos como histogramas, y densidades. Así mismo, se puede realizar el grafico de cuantiles teóricos vs cuantiles muestrales para una distribución normal.
+
+
+```{r}
+par(mfrow=c(1,3))
+hist(Peso, xlab="Peso", ylab="Frecuencia", las=1, main="")
+plot(density(Peso), xlab="Peso", ylab="Densidad", las=1, main="")
+qqnorm(Peso, xlab="Cuantiles teóricos", ylab="Cuantiles muestrales", las=1,main="")
+qqline(Peso)
+```
+
+
+Los tres gráficos muestran que el comportamiento de los Pesos es simétrico y podrían seguir una distribución normal.
+
+El segundo paso es estimar los parámetros de la distribución hipótetica a partir de la función fitdistr del paquete MASS. En este caso la distribución hipótetica es la normal. Esta función permite estimar parámetros de las siguientes distribuciones: “beta”, “cauchy”, “chi-squared”, “exponential”, “f”, “gamma”, “geometric”, “log-normal”, “logistic”, “negative binomial”, “normal”, “Poisson”, “t” y “weibull”.
+
+La función fitdistr tiene dos argumentos básicos, el primero es el nombre de los datos y el segundo es el nombre de la distribución hipótetica.
+
+```{r}
+require(MASS)
+ajuste <- fitdistr(Peso,"normal")
+ajuste
+```
+
+El resultado de la función es la estimación de los parámetros de la distribución hipótetica y su respectiva desviación estándar (valor entre parentesis). En este caso el peso promedio (media estimada) es de 750.008 y la desviación estándar del peso (desviación estándar estimada) es de 1.323305.
+
+El tercer paso es usar una prueba de bondad de ajuste para probar si los pesos siguen o no una distribución normal. La primera prueba que se usará será la prueba de Kolmogorov-Smirnov. Esta prueba se obtiene a partir de la función ks.test, la cual tiene tres argumentos básicos: el nombre de la variable, el nombre de la distribución hipótetica antecedida por la letra p y los parámetros estimados.
+
+
+```{r}
+Ks<- ks.test(Peso, "pnorm", mean =ajuste$estimate[1], sd= ajuste$estimate[2])
+Ks
+```
+
+La segunda prueba que se usará será la prueba de Anderson Darling. La función asociada a esta prueba es ad.test del paquete goftest y tiene los mismos argumentos de la prueba ks.
+```{r}
+install.packages("goftest")
+require(goftest)
+Ad<- ad.test(Peso, "pnorm", mean =ajuste$estimate[1], sd= ajuste$estimate[2])
+Ad
+```
+
+De acuerdo al valor-p de la prueba de Kolmogorov-Smirnov (0.9911409) y de la prueba de Anderson Darling (0.9912932) se puede concluir con un nivel de significancia de 0.05 que los pesos siguen una distribución normal, puesto que son mayores a un nivel de significancia de 0.05. Cabe anotar que se usaron estas dos pruebas porque el peso de los detergentes es una variable continua. Si la variable de inetrés fuera discreta deberiamos usar la prueba Chi-cuadrado y no las dos anteriores.
+
+La siguiente gráfica muestra la función de distribución acumulada empirica de los pesos y la teórica de la distribución normal y se observa que las dos siguen el mismo patron, lo cual corrobora la conclusión anterior.
+
+```{r}
+xe <- seq(min(Peso), max(Peso), by=0.0001)
+plot(xe, pnorm(xe, mean=ajuste$estimate[1], sd=ajuste$estimate[2]), type="l", col="red", xlab="x", ylab="pnorm(x, mean, sd)")
+plot(ecdf(Peso), add=TRUE)
+
+```
+
+
+
+
+##Ejemplo 2:
+
+
+Se quiere determinar la distribución de las horas transcurridas hasta la falla de componentes de un computador. Para ello se toma una muestra de 20 componentes y se determinan los tiempos, los cuales están definidos en el vector Tiempos:
+
+```{r}
+Tiempo <- c(3.70, 3.75, 12.18, 28.55, 29.37, 31.61, 36.78, 51.14, 108.71, 125.21, 125.35, 131.76, 158.61, 172.96, 177.12, 185.37, 212.98, 280.40, 351.28, 441.79)
+
+```
+
+El primer paso para determinar la distribución de los tiempos es realizar un histograma y la densidad. No se hará un gráfico qqnorm porque áun no se sabe cual es la distribución hipótetica. En el ejemplo 1 se hizo el gráfico qqnorm porque se sabia que la distribución hipótetica era la normal.
+
+```{r}
+par(mfrow=c(1,2))
+hist(Tiempo, xlab="Tiempo", ylab="Frecuencia", las=1, main="")
+plot(density(Tiempo), xlab="Tiempo", ylab="Densidad", las=1, main="")
+
+```
+
+
+
+La forma de la distribución es asimetrica con sesgo positivo similar a una distribución exponencial.
+
+El segundo paso es estimar los parámetros de la distribución hipótetica, exponencial.
+
+
+```{r}
+ajuste <- fitdistr(Tiempo,"exponential")
+ajuste
+
+```
+
+El resultado de la función es que la tasa promedio de falla de los componentes es de 0.0074945.
+
+El tercer paso es usar las pruebas de Kolmogorov-Smirnov y de Anderson Darling, usando como argumentos el paramétro de la distribución exponencial
+
+```{r}
+Ks<- ks.test(Tiempo, "pexp", rate =ajuste$estimate[1])
+Ad<- ad.test(Tiempo, "pexp", rate =ajuste$estimate[1])
+Ks
+Ad
+```
+
+De acuerdo al valor-p de la prueba de Kolmogorov-Smirnov (0.6380994) y de la prueba de Anderson Darling (0.8167356) se puede concluir con un nivel de significancia de 0.05 que los Tiempos siguen una distribución exponencial, puesto que son mayores a un nivel de significancia de 0.05.
+
+La siguiente gráfica muestra la función de distribución acumulada empirica de los tiempos y la teórica de la distribución exponencial y se observa que las dos siguen el mismo patron, lo cual corrobora la conclusión anterior.
+
+```{r}
+xe <- seq(min(Tiempo), max(Tiempo), by=0.0001)
+plot( xe, pexp(xe, rate=ajuste$estimate[1]), type="l", col="red", xlab="x",ylab="pexp(x,rate)")
+plot(ecdf(Tiempo), add=TRUE)
+
+```
+
+##Ejemplo 3 
+
+Durante la Segunda Guerra Mundial se dividio el mapa de Londres en cuadrıculas de 1/4 km
+y se conto el numero de bombas caıdas en cada cuadrıcula durante un bombardeo aleman. Los
+resultados fueron:
+
+```{r}
+x<-c(0,1,2,3,4,5)
+frec<-c(229,211,93,35,7,1)
+(londres<-data.frame(x,frec))
+```
+
+Se quiere contrastar la hipotesis de que los datos siguen una distribucion de Poisson. Se pide:
+
+1. Diseñar las columnas adecuadas que registren las frecuencias observadas y las esperadas.
+```{r}
+lambda<-sum(frec*x)/sum(frec)
+```
+
+
+Calculamos las probabilidades de Poisson con
+```{r}
+londres$prob <- with(londres, round(dpois(0:5, lambda=0.9288194),4))
+```
+
+
+2. Calcular el estad´ıstico del contraste χ
+```{r}
+chisq.test(londres$fre.a[1:5],p=londres$prob[1:5])
+```
+data: londres$fre.a[1:5] X-squared = 1.0118, df = 4, p-value =0.908
+
+
+##Otras Pruebas
+```{r}
+datos<-read.delim("clipboard")
+MIT<-subset(datos,Universidad=="MIT")
+head(MIT)
+```
+##   Universidad       Facultad    Genero Uso.de.carnet Nota.2013.1
+## 1         MIT       Medicina Masculino             0        14.3
+## 2         MIT       Medicina Masculino             2        11.6
+## 3         MIT Administracion Masculino             2        13.5
+## 4         MIT        Derecho Masculino             6        13.6
+## 5         MIT     Ingenieria  Femenino             3        11.9
+## 6         MIT Administracion  Femenino             2        13.8
+##   Nota.2013.2
+## 1        14.5
+## 2        11.7
+## 3        11.5
+## 4        11.1
+## 5        16.2
+## 6        14.0
+
+Hipótesis
+H0: La muestra proviene de una distribución normal.
+
+H1: La muestra no proviene de una distribución normal.
+
+Para pruebas de normalidad siempre se plantean así las hipótesis.
+Nivel de Significancia
+El nivel de significancia que se trabajará es de 0.05. Alfa=0.05
+
+Criterio de Decisión
+
+Si P < Alfa Se rechaza Ho
+
+Si p >= Alfa No se rechaza Ho
+
+
+Pruebas de Normalidad del Paquete “normtest”
+###Prueba de Anderson-Darling###
+ad.test(MIT[,5])
+###Prueba de Cramer-von Mises###
+###Es útil para pequeñas muestras y usa los momentos como criterio.###
+cvm.test(MIT[,5])
+###Pruena de Lilliefors (Kolmogorov-Smirnov)###
+lillie.test(MIT[,5])
+###Prueba de Pearson chi-square###
+pearson.test(MIT[,5])
+###Prueba de Shapiro-Francia###
+sf.test(MIT[,5])
+###Prueba de Jarque Bera###
+jb.norm.test(MIT[,5])
+###Prueba de Frosini###
+frosini.norm.test(MIT[,5])
+###Prueba de Geary###
+geary.norm.test(MIT[,5])
+###Prueba de Hegazy-Green###
+hegazy1.norm.test(MIT[,5], nrepl=20000)
+###Prueba de Jarque-Bera###
+jb.norm.test(MIT[,5], nrepl=2000)
+###Prueba de Kurtosis###
+kurtosis.norm.test(MIT[,5], nrepl=2000)
+###Prueba de Skewness###
+skewness.norm.test(MIT[,5], nrepl=2000)
+###Prueba de Spiegelhalter###
+spiegelhalter.norm.test(MIT[,5], nrepl=2000)
+###Puerba de Weisberg-Bingham
+wb.norm.test(MIT[,5], nrepl=2000)
+
+Pruebas de Normalidad del Paquete “moments”
+###Prueba de Agostino###
+agostino.test(MIT[,5])
+###Prueba de Shapiro-Wilk###
+shapiro.test(MIT[,5])
