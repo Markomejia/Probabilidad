@@ -233,3 +233,17 @@ Pruebas de Normalidad del Paquete “moments”
 agostino.test(MIT[,5])
 ###Prueba de Shapiro-Wilk###
 shapiro.test(MIT[,5])
+
+
+
+
+####olvida lo anterior utiliza esta
+tiie<-read.csv("C://Users//Sala-G37//Downloads//ts.csv")
+install.packages("rriskDistributions")
+library(rriskDistributions)
+par<-fit.cont(tiie[,1])
+
+
+tas<-rlnorm(10, meanlog = 1.7347340, sdlog = 0.4012853)
+tas
+
